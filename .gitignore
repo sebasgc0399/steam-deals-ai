@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+
+# Archivos de datos en runtime — contienen IDs de usuarios y estado operativo
+# Nunca deben commitearse
+data/
