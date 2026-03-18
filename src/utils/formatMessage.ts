@@ -1,7 +1,4 @@
-import { Markup } from 'telegraf';
 import { FilteredDeal } from '../types';
-
-export type DealsKeyboard = ReturnType<typeof Markup.inlineKeyboard>;
 
 const copFormatter = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
@@ -55,7 +52,7 @@ export function formatDealsMessage(deals: FilteredDeal[], copRate: number): stri
     const salePriceUSD = formatUsdPrice(deal.salePrice);
 
     return [
-      `<b>${i + 1}. ${escapeHtml(deal.title)}</b>`,
+      `<b><a href="${deal.dealUrl}">${i + 1}. ${escapeHtml(deal.title)}</a></b>`,
       `💰 <s>${normalPriceCOP}</s> → <b>${salePriceCOP}</b> (${salePriceUSD}) (${deal.savingsPercent}% OFF)`,
       score,
       `💡 <i>${escapeHtml(deal.reason)}</i>`,
@@ -63,12 +60,4 @@ export function formatDealsMessage(deals: FilteredDeal[], copRate: number): stri
   });
 
   return header + subtitle + items.join(`\n\n${'─'.repeat(20)}\n\n`);
-}
-
-export function buildDealsKeyboard(deals: FilteredDeal[]): DealsKeyboard {
-  const buttons = deals.map((deal) => [
-    Markup.button.url(`\u{1F6D2} ${deal.title}`, deal.dealUrl),
-  ]);
-
-  return Markup.inlineKeyboard(buttons);
 }

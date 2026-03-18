@@ -3,7 +3,7 @@ import { config } from '../config';
 import { notifyAllUsers } from '../notifier/telegramNotifier';
 import { getExchangeRate } from '../services/currencyService';
 import { fetchAndMarkDeals } from '../services/dealsService';
-import { buildDealsKeyboard, formatDealsMessage } from '../utils/formatMessage';
+import { formatDealsMessage } from '../utils/formatMessage';
 
 export function startScheduler(): void {
   console.log(`⏰ Cron activado con schedule: "${config.cron.schedule}"`);
@@ -28,8 +28,7 @@ export function startScheduler(): void {
 
       const copRate = await getExchangeRate();
       const message = formatDealsMessage(result.deals, copRate);
-      const keyboard = buildDealsKeyboard(result.deals);
-      await notifyAllUsers(message, keyboard);
+      await notifyAllUsers(message);
       console.log(`✅ Broadcast enviado: ${result.deals.length} ofertas.`);
     } catch (err) {
       const msg = (err as Error).message ?? 'sin mensaje';

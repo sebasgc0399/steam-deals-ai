@@ -116,7 +116,7 @@ export function buildFilteredDeals(
         savingsPercent: Math.round(parseFloat(d.savings)),
         metacriticScore: parseInt(d.metacriticScore) || 0,
         steamRatingText: d.steamRatingText,
-        dealUrl: `https://www.cheapshark.com/redirect?dealID=${encodeURIComponent(d.dealID)}`,
+        dealUrl: `https://store.steampowered.com/app/${d.steamAppID}`,
         reason,
       } satisfies FilteredDeal;
     })

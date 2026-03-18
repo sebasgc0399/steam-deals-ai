@@ -1,4 +1,4 @@
-import { Telegram, type Types } from 'telegraf';
+import { Telegram } from 'telegraf';
 import { config } from '../config';
 import { db } from '../db/database';
 
@@ -50,9 +50,7 @@ function isPermanentError(err: unknown): boolean {
   return code === 403 || (code === 400 && desc.toLowerCase().includes('chat not found'));
 }
 
-type TelegramReplyMarkup = Pick<Types.ExtraReplyMessage, 'reply_markup'>;
-
-export async function notifyAllUsers(message: string, keyboard?: TelegramReplyMarkup): Promise<void> {
+export async function notifyAllUsers(message: string): Promise<void> {
   const chatIds = loadChatIds();
   console.log(`[notifier] Sending message to ${chatIds.length} user(s)...`);
   const invalidIds: number[] = [];
@@ -61,7 +59,7 @@ export async function notifyAllUsers(message: string, keyboard?: TelegramReplyMa
     try {
       // Explicit timeout to avoid one hung send blocking the full loop.
       await Promise.race([
-        telegram.sendMessage(chatId, message, { parse_mode: 'HTML', ...keyboard }),
+        telegram.sendMessage(chatId, message, { parse_mode: 'HTML' }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('sendMessage timeout')), config.http.telegramTimeoutMs),
         ),
