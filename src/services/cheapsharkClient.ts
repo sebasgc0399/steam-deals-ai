@@ -12,7 +12,7 @@ export async function fetchSteamDeals(options: {
     params: {
       storeID: '1',
       upperPrice: options.maxPrice,
-      sortBy: 'Savings',
+      sortBy: 'Deal Rating',
       onSale: 1,
       pageSize: options.pageSize,
       // ⚠️ No se filtra por metacritic aquí — lo hace rulesFilter con lógica OR
