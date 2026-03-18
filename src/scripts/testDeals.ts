@@ -1,4 +1,5 @@
 import { config } from '../config'; // valida variables de entorno al importar
+import { getExchangeRate } from '../services/currencyService';
 import { fetchAndMarkDeals, fetchDeals } from '../services/dealsService';
 import { formatDealsMessage } from '../utils/formatMessage';
 
@@ -8,6 +9,8 @@ const DRY_RUN = true;
 
 async function main() {
   console.log(`🔍 Buscando y filtrando ofertas... (dry run: ${DRY_RUN})\n`);
+
+  const copRate = await getExchangeRate();
 
   if (DRY_RUN) {
     const result = await fetchDeals(); // retorna PipelineResult
@@ -22,7 +25,7 @@ async function main() {
     }
 
     console.log('--- MENSAJE FINAL (HTML) ---\n');
-    console.log(formatDealsMessage(result.deals));
+    console.log(formatDealsMessage(result.deals, copRate));
     console.log(`\n✅ ${result.deals.length} juegos seleccionados.`);
   } else {
     // fetchAndMarkDeals ahora retorna PipelineResult (mismo contrato que fetchDeals)
@@ -36,7 +39,7 @@ async function main() {
       return;
     }
     console.log('--- MENSAJE FINAL (HTML) ---\n');
-    console.log(formatDealsMessage(result.deals));
+    console.log(formatDealsMessage(result.deals, copRate));
     console.log(`\n✅ ${result.deals.length} juegos seleccionados y marcados como notificados.`);
   }
 }

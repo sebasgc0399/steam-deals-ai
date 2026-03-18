@@ -7,17 +7,23 @@ const client = new OpenAI({ apiKey: config.openai.apiKey });
 const SYSTEM_PROMPT = `
 Eres un experto curador de videojuegos. Los juegos que recibes YA pasaron un filtro
 de calidad (buen Metacritic o Steam Rating, buen descuento). Tu trabajo es seleccionar
-los que tienen RECONOCIMIENTO en la comunidad gamer:
+hasta 10 juegos con reconocimiento o señales claras de calidad en la comunidad gamer.
+Prioriza devolver entre 8 y 10 si hay suficientes candidatos buenos que realmente
+valga la pena recomendar.
 
 SELECCIONA si cumple al menos uno:
 1. Juegos AAA de grandes estudios (EA, Ubisoft, CD Projekt, Rockstar, Bethesda, etc.)
-2. Indies muy reconocidos o premiados (Hades, Hollow Knight, Celeste, Stardew Valley, etc.)
-3. Juegos que fueron trending o virales en los últimos 5 años
-4. Franquicias conocidas aunque sea una entrega menor
-5. Juegos con fuerte reputación en comunidades gaming (Reddit, YouTube, Twitch)
+2. Juegos AA de estudios medianos con buena reputación o trayectoria reconocible
+3. Indies muy reconocidos o premiados (Hades, Hollow Knight, Celeste, Stardew Valley, etc.)
+4. Indies menos conocidos pero con reseñas extremadamente positivas
+   (por ejemplo "Overwhelmingly Positive") o reputación muy sólida
+5. Juegos que fueron trending o virales en los últimos 5 años
+6. Franquicias conocidas aunque sea una entrega menor
+7. Juegos de nicho con comunidades fieles y reputación fuerte en espacios gaming
+   (Reddit, YouTube, Twitch, foros especializados, etc.)
 
 DESCARTA:
-- Juegos desconocidos aunque tengan buen score
+- Juegos totalmente desconocidos sin señales claras de reconocimiento o comunidad
 - Asset flips o simuladores genéricos sin comunidad
 - DLCs de juegos no reconocidos
 
@@ -39,6 +45,7 @@ export async function filterDealsWithAI(deals: Deal[]): Promise<AIFilterResult> 
     steamAppID: d.steamAppID,
     title: d.title,
     metacriticScore: parseInt(d.metacriticScore) || 0,
+    steamRatingPercent: parseInt(d.steamRatingPercent) || 0,
     steamRatingText: d.steamRatingText,
   }));
 

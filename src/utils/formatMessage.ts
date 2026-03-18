@@ -1,5 +1,14 @@
 import { FilteredDeal } from '../types';
 
+const copFormatter = new Intl.NumberFormat('es-CO', {
+  maximumFractionDigits: 0,
+});
+
+const usdFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 /** Escapa caracteres especiales de HTML para usar en mensajes de Telegram */
 function escapeHtml(text: string): string {
   return text
@@ -8,7 +17,16 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;');
 }
 
-export function formatDealsMessage(deals: FilteredDeal[]): string {
+function formatCopPrice(usdPrice: string, copRate: number): string {
+  const value = Math.round(parseFloat(usdPrice) * copRate);
+  return `COP $${copFormatter.format(value)}`;
+}
+
+function formatUsdPrice(usdPrice: string): string {
+  return `USD $${usdFormatter.format(parseFloat(usdPrice))}`;
+}
+
+export function formatDealsMessage(deals: FilteredDeal[], copRate: number): string {
   if (deals.length === 0) {
     return '🎮 No hay ofertas destacadas hoy. ¡Vuelve mañana!';
   }
@@ -29,9 +47,13 @@ export function formatDealsMessage(deals: FilteredDeal[]): string {
       ? `📊 Metacritic: <b>${deal.metacriticScore}</b>`
       : `⭐ ${escapeHtml(deal.steamRatingText)}`;
 
+    const normalPriceCOP = formatCopPrice(deal.normalPrice, copRate);
+    const salePriceCOP = formatCopPrice(deal.salePrice, copRate);
+    const salePriceUSD = formatUsdPrice(deal.salePrice);
+
     return [
       `<b>${i + 1}. ${escapeHtml(deal.title)}</b>`,
-      `💰 <s>$${escapeHtml(deal.normalPrice)}</s> → <b>$${escapeHtml(deal.salePrice)}</b> (${deal.savingsPercent}% OFF)`,
+      `💰 <s>${normalPriceCOP}</s> → <b>${salePriceCOP}</b> (${salePriceUSD}) (${deal.savingsPercent}% OFF)`,
       score,
       `💡 <i>${escapeHtml(deal.reason)}</i>`,
       `<a href="${deal.dealUrl}">🛒 Ver oferta en Steam</a>`,

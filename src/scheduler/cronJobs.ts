@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { config } from '../config';
 import { notifyAllUsers } from '../notifier/telegramNotifier';
+import { getExchangeRate } from '../services/currencyService';
 import { fetchAndMarkDeals } from '../services/dealsService';
 import { formatDealsMessage } from '../utils/formatMessage';
 
@@ -25,7 +26,8 @@ export function startScheduler(): void {
         return;
       }
 
-      const message = formatDealsMessage(result.deals);
+      const copRate = await getExchangeRate();
+      const message = formatDealsMessage(result.deals, copRate);
       await notifyAllUsers(message);
       console.log(`✅ Broadcast enviado: ${result.deals.length} ofertas.`);
     } catch (err) {

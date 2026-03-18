@@ -1,6 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { config } from '../config';
 import { removeChatId, saveChatId } from '../notifier/telegramNotifier';
+import { getExchangeRate } from '../services/currencyService';
 import { fetchDeals } from '../services/dealsService';
 import { formatDealsMessage } from '../utils/formatMessage';
 
@@ -53,7 +54,8 @@ export function registerCommands(bot: Telegraf): void {
         return;
       }
 
-      await ctx.reply(formatDealsMessage(result.deals), { parse_mode: 'HTML' });
+      const copRate = await getExchangeRate();
+      await ctx.reply(formatDealsMessage(result.deals, copRate), { parse_mode: 'HTML' });
     } catch (err) {
       await ctx.reply('❌ Hubo un error inesperado. Intenta más tarde.');
       // Log mínimo: no volcar el stack ni el objeto de error completo
