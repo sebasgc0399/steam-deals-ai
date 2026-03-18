@@ -3,7 +3,7 @@ import { config } from '../config';
 import { removeChatId, saveChatId } from '../notifier/telegramNotifier';
 import { getExchangeRate } from '../services/currencyService';
 import { fetchDeals } from '../services/dealsService';
-import { formatDealsMessage } from '../utils/formatMessage';
+import { buildDealsKeyboard, formatDealsMessage } from '../utils/formatMessage';
 
 // Rate limit en memoria: Map<chatId, timestamp último uso>
 // Simple, sin dependencias externas. Se resetea al reiniciar el proceso (aceptable para MVP).
@@ -55,7 +55,11 @@ export function registerCommands(bot: Telegraf): void {
       }
 
       const copRate = await getExchangeRate();
-      await ctx.reply(formatDealsMessage(result.deals, copRate), { parse_mode: 'HTML' });
+      const keyboard = buildDealsKeyboard(result.deals);
+      await ctx.reply(formatDealsMessage(result.deals, copRate), {
+        parse_mode: 'HTML',
+        ...keyboard,
+      });
     } catch (err) {
       await ctx.reply('❌ Hubo un error inesperado. Intenta más tarde.');
       // Log mínimo: no volcar el stack ni el objeto de error completo

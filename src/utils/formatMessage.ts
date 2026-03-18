@@ -1,4 +1,7 @@
+import { Markup } from 'telegraf';
 import { FilteredDeal } from '../types';
+
+export type DealsKeyboard = ReturnType<typeof Markup.inlineKeyboard>;
 
 const copFormatter = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
@@ -31,7 +34,7 @@ export function formatDealsMessage(deals: FilteredDeal[], copRate: number): stri
     return '🎮 No hay ofertas destacadas hoy. ¡Vuelve mañana!';
   }
 
-  // Bogotá explícito — coherente con el cron y la política de frescura del snapshot
+  // Bogotá explícito: coherente con el cron y la política de frescura del snapshot
   const date = new Date().toLocaleDateString('es-CO', {
     timeZone: 'America/Bogota',
     weekday: 'long',
@@ -56,9 +59,16 @@ export function formatDealsMessage(deals: FilteredDeal[], copRate: number): stri
       `💰 <s>${normalPriceCOP}</s> → <b>${salePriceCOP}</b> (${salePriceUSD}) (${deal.savingsPercent}% OFF)`,
       score,
       `💡 <i>${escapeHtml(deal.reason)}</i>`,
-      `<a href="${deal.dealUrl}">🛒 Ver oferta en Steam</a>`,
     ].join('\n');
   });
 
   return header + subtitle + items.join(`\n\n${'─'.repeat(20)}\n\n`);
+}
+
+export function buildDealsKeyboard(deals: FilteredDeal[]): DealsKeyboard {
+  const buttons = deals.map((deal) => [
+    Markup.button.url(`\u{1F6D2} ${deal.title}`, deal.dealUrl),
+  ]);
+
+  return Markup.inlineKeyboard(buttons);
 }
