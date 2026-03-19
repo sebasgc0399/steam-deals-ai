@@ -2,8 +2,10 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_PATH = path.join(DATA_DIR, 'bot.db');
+const DEFAULT_DB_PATH = './data/bot.db';
+const configuredDbPath = process.env.DATABASE_PATH?.trim() || DEFAULT_DB_PATH;
+const DB_PATH = path.resolve(process.cwd(), configuredDbPath);
+const DATA_DIR = path.dirname(DB_PATH);
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
