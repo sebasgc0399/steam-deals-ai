@@ -1,6 +1,6 @@
 # Steam Deals Notifier
 
-[Abrir bot en Telegram](https://www.google.com/search?q=https://t.me/steamdeals_notify_bot)
+**[Abrir Bot en Telegram](https://t.me/steamdeals_notify_bot)**
 
 Bot de Telegram para descubrir ofertas de Steam con menos ruido y mejor criterio. El proyecto consulta CheapShark, aplica filtros deterministas, guarda estado en SQLite y usa GPT-4o-mini solo cuando realmente hace falta curar candidatos.
 
