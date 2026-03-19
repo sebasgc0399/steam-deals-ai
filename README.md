@@ -8,7 +8,7 @@ Bot de Telegram para descubrir ofertas de Steam con menos ruido y mejor criterio
 
 | Inicio (`/start`) | Ofertas (`/deals`) | Logs (`cron` / pipeline) |
 | --- | --- | --- |
-| ![Inicio del bot](<img width="457" height="637" alt="image" src="https://github.com/user-attachments/assets/d4de4edf-8269-4372-a5ff-88ad72709dbe" />) | ![Ofertas filtradas](<img width="449" height="642" alt="image" src="https://github.com/user-attachments/assets/b6f5e728-8ef5-4e2f-8c18-15c5f7e454b5" />) | ![Logs del sistema](<img width="757" height="164" alt="Log" src="https://github.com/user-attachments/assets/30a1eff8-2033-4256-b891-986da1685fbd" />) |
+| ![Inicio del bot](https://github.com/user-attachments/assets/d4de4edf-8269-4372-a5ff-88ad72709dbe) | ![Ofertas filtradas](https://github.com/user-attachments/assets/b6f5e728-8ef5-4e2f-8c18-15c5f7e454b5) | ![Logs del sistema](https://github.com/user-attachments/assets/30a1eff8-2033-4256-b891-986da1685fbd) |
 
 ## ✨ Caracteristicas
 
