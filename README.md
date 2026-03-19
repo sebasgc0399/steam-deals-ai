@@ -1,197 +1,253 @@
-# Steam Deals Bot 🎮
+# Steam Deals Notifier
 
-Bot de Telegram para descubrir ofertas de Steam con criterio editorial real. En lugar de disparar cualquier descuento, el pipeline combina CheapShark, filtros deterministas, persistencia local en SQLite y OpenAI para entregar una selección corta, útil y accionable.
+[Abrir bot en Telegram](https://www.google.com/search?q=https://t.me/steamdeals_notify_bot)
 
-La meta es simple: menos spam, menos ruido y más juegos que sí valen la pena comprar.
+Bot de Telegram para descubrir ofertas de Steam con menos ruido y mejor criterio. El proyecto consulta CheapShark, aplica filtros deterministas, guarda estado en SQLite y usa GPT-4o-mini solo cuando realmente hace falta curar candidatos.
 
-## Qué hace diferente a este bot
+## 📸 Vista Previa
 
-- Descubre ofertas desde CheapShark y se queda solo con juegos que pasan umbrales reales de descuento, precio y calidad.
-- Usa SQLite para persistir suscriptores, evitar repetir juegos notificados recientemente y cachear el snapshot diario del pipeline.
-- Usa OpenAI como curador experto para descartar basura, priorizar juegos reconocidos y explicar por qué cada recomendación merece atención.
-- Entrega una UI clara en Telegram con títulos clickeables hacia Steam, precios en COP/USD y alertas visuales para descuentos extremos.
+| Inicio (`/start`) | Ofertas (`/deals`) | Logs (`cron` / pipeline) |
+| --- | --- | --- |
+| ![Inicio del bot](screenshot_start.png) | ![Ofertas filtradas](screenshot_deals.png) | ![Logs del sistema](screenshot_logs.png) |
 
-## Arquitectura
+## ✨ Caracteristicas
 
-```text
-CheapShark (Source)
-        ->
-SQLite (Dedup + Daily Snapshot Cache Check)
-        ->
-OpenAI (Intelligence)
-        ->
-Telegram (UI)
-```
+- Filtros por `Metacritic` y `Steam Rating` con logica OR, junto con descuento minimo y precio maximo.
+- Deduplicacion de 7 dias para no reenviar el mismo `steamAppID` una y otra vez.
+- Analisis con IA usando `gpt-4o-mini` para quedarse solo con juegos relevantes y generar una razon breve.
+- Snapshot diario con hash de candidatos para reutilizar resultados y evitar llamadas repetidas a OpenAI.
+- Broadcast diario por cron y consulta manual con `/deals`.
+- Formato final para Telegram con enlaces directos a Steam y precios en COP/USD.
 
-### Flujo real de datos
+## 🧰 Tecnologias
 
-1. CheapShark entrega deals de Steam ordenados por relevancia.
-2. `rulesFilter` aplica filtros duros de descuento mínimo, precio máximo y calidad basada en Metacritic o Steam Rating.
-3. SQLite consulta `notified_items` para deduplicación y evita reenviar juegos ya notificados dentro de la ventana configurada.
-4. El sistema genera un hash de los candidatos y compara contra `daily_snapshot`.
-5. Si el hash no cambió, reutiliza el snapshot del día sin volver a llamar a OpenAI.
-6. Si hay cambios, OpenAI selecciona qué juegos pasan y genera una razón corta en español por cada recomendación.
-7. `formatMessage` construye el HTML final y Telegram lo entrega como respuesta directa o broadcast diario.
-
-## Persistencia con SQLite
-
-El bot usa SQLite embebido vía `better-sqlite3` y guarda su estado en `data/bot.db`. No depende de una base externa ni de un servicio adicional para operar en producción ligera.
-
-### Tablas principales
-
-- `subscribers`: almacena los `chat_id` suscritos para enviar broadcasts diarios.
-- `notified_items`: registra juegos ya notificados para evitar spam y repetición dentro de `DEDUP_DAYS`.
-- `daily_snapshot`: guarda el snapshot diario exitoso, junto con `candidates_hash`, `payload_json` y `created_at`.
-
-### Qué resuelve esta capa
-
-- Persistencia estable de suscriptores entre reinicios.
-- Deduplicación por `steamAppID` para no castigar al usuario con la misma oferta una y otra vez.
-- Reutilización del análisis del día cuando la lista de candidatos no cambió.
-- Fallback operativo cuando la IA falla pero ya existe un snapshot fresco válido.
-
-## Curación con OpenAI
-
-La capa de IA usa el SDK oficial de OpenAI y, por defecto, trabaja con `gpt-4o-mini`. El modelo es configurable mediante `OPENAI_MODEL`, así que el README no lo presenta como un valor hardcodeado.
-
-### Cómo actúa el curador experto
-
-- Recibe solo metadatos relevantes del juego: `steamAppID`, título, Metacritic y señales de rating en Steam.
-- No decide precios ni enlaces: esos datos siempre se reconstruyen desde CheapShark.
-- Devuelve un JSON estricto con `selectedIds` y `reasons`.
-- Opera con `temperature: 0` para mantener resultados repetibles y hacer confiable la caché por hash.
-- Descarta juegos sin reconocimiento, asset flips, basura genérica y deals sin señales claras de calidad.
-
-### Por qué mejora el resultado
-
-CheapShark es excelente como fuente de descubrimiento, pero no como editor. La IA funciona como un curador gamer: separa “está barato” de “vale la pena comprarlo”, prioriza juegos AAA, AA con buena reputación, franquicias conocidas, indies fuertes y títulos con comunidad real.
-
-Cuando la respuesta de OpenAI no es válida, el pipeline no inventa resultados: registra el error y reutiliza el snapshot fresco del día si existe. Si no existe, evita enviar un broadcast engañoso.
-
-## Experiencia en Telegram
-
-La salida final está optimizada para lectura rápida y acción inmediata.
-
-- Cada título es clickeable y apunta directo a `https://store.steampowered.com/app/{steamAppID}`.
-- Los descuentos de `>= 90%` muestran una alerta visual `🚨` para destacar oportunidades extremas.
-- Cada bloque muestra precio normal tachado, precio final en COP, referencia en USD y porcentaje de descuento.
-- La línea `💡` resume por qué el juego es una buena compra según la curación de IA.
-- El encabezado incluye fecha localizada en `America/Bogota` y el total de juegos seleccionados por IA.
-
-## Stack técnico
-
-- `Node.js` + `TypeScript`
-- `Telegraf` para Telegram
-- `OpenAI SDK` para la curación final
-- `better-sqlite3` para persistencia local
-- `node-cron` para ejecución programada
-- `axios` para CheapShark y tasa USD/COP
-- `dotenv` para configuración por entorno
-- `tsx` y `tsc` para desarrollo y build
-
-## Instalación
-
-### Requisitos
+### Core
 
 - `Node.js`
-- `npm`
-- Un bot de Telegram creado con `@BotFather`
-- Una `OPENAI_API_KEY`
+- `TypeScript`
+- `SQLite` con `better-sqlite3`
+- `PM2`
 
-### 1. Clonar el repositorio
+### APIs utilizadas
+
+- `CheapShark API`: fuente de ofertas de Steam.
+- `OpenAI API`: curacion final con `gpt-4o-mini`.
+
+### Runtime complementario
+
+- `Telegraf`: comandos y envio de mensajes en Telegram.
+- `node-cron`: programacion diaria del bot.
+- `axios`: integracion HTTP.
+- `open.er-api.com`: conversion `USD -> COP` con cache en memoria de 12 horas y fallback seguro.
+
+## 🏗️ Arquitectura
+
+```text
+CheapShark
+   ->
+Reglas duras + deduplicacion en SQLite
+   ->
+Snapshot diario + hash de candidatos
+   ->
+OpenAI (solo si hay cambios)
+   ->
+Telegram
+```
+
+Persistencia actual en SQLite:
+
+- `subscribers`: chat IDs suscritos.
+- `notified_items`: juegos ya enviados dentro de la ventana de deduplicacion.
+- `daily_snapshot`: ultimo resultado exitoso, hash de candidatos y payload serializado.
+
+## ⚙️ Instalacion en Ubuntu
+
+### 1. Instalar Node.js y npm
+
+```bash
+sudo apt update
+sudo apt install -y curl ca-certificates gnupg
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v
+npm -v
+```
+
+### 2. Instalar PM2
+
+```bash
+sudo npm install -g pm2
+pm2 -v
+```
+
+### 3. Clonar el repositorio
 
 ```bash
 git clone <URL_DEL_REPOSITORIO>
 cd steam-deals-ai
 ```
 
-### 2. Instalar dependencias
+### 4. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
-
-Crea tu `.env` a partir de `.env.example`:
+### 5. Configurar variables de entorno
 
 ```bash
 cp .env.example .env
+nano .env
 ```
 
-En PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-### Variables disponibles
-
-| Variable | Requerida | Default | Descripción |
-| --- | --- | --- | --- |
-| `BOT_TOKEN` | Sí | - | Token del bot de Telegram. |
-| `OPENAI_API_KEY` | Sí | - | API key de OpenAI. |
-| `OPENAI_MODEL` | No | `gpt-4o-mini` | Modelo de curación usado por OpenAI. |
-| `MIN_DISCOUNT_PERCENT` | No | `50` | Descuento mínimo requerido para considerar un deal. |
-| `MIN_METACRITIC_SCORE` | No | `70` | Metacritic mínimo para aprobar por esa vía. |
-| `MIN_STEAM_RATING_PERCENT` | No | `70` | Rating mínimo en Steam para aprobar por esa vía. |
-| `MAX_PRICE_USD` | No | `60` | Precio final máximo permitido. |
-| `DEALS_PAGE_SIZE` | No | `60` | Cantidad de deals a traer desde CheapShark. |
-| `DEDUP_DAYS` | No | `7` | Días durante los cuales un juego no vuelve a notificarse. |
-| `CRON_SCHEDULE` | No | `0 9 * * *` | Expresión cron para el broadcast diario. |
-
-### 4. Ejecutar el bot
-
-Desarrollo:
-
-```bash
-npm run dev
-```
-
-Compilar:
+### 6. Compilar
 
 ```bash
 npm run build
 ```
 
-Producción:
+### 7. Ejecutar con PM2
 
 ```bash
-npm start
+pm2 start dist/bot/index.js --name steam-bot
+pm2 save
 ```
 
-Prueba manual del pipeline:
+### 8. Activar autoarranque al reiniciar el servidor
 
 ```bash
-npm run test:deals
+pm2 startup systemd
 ```
 
-## Scripts de NPM
+Ejecuta el comando adicional que imprime PM2 y luego:
 
-| Script | Descripción |
+```bash
+pm2 save
+```
+
+Comandos operativos utiles:
+
+```bash
+pm2 logs steam-bot
+pm2 restart steam-bot
+pm2 status
+```
+
+## 🔐 Variables de entorno
+
+Ejemplo recomendado de `.env`:
+
+```dotenv
+# Telegram Bot Token
+BOT_TOKEN=123456789:AbCdefGhIJKlmNoPQRsTUVwxyZ
+
+# OpenAI
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxx
+OPENAI_MODEL=gpt-4o-mini
+
+# Filtros capa 1 (sin costo)
+MIN_DISCOUNT_PERCENT=50
+MIN_METACRITIC_SCORE=70
+MIN_STEAM_RATING_PERCENT=70
+MAX_PRICE_USD=60
+DEALS_PAGE_SIZE=60
+
+# Deduplicacion
+DEDUP_DAYS=7
+
+# Scheduler
+CRON_SCHEDULE=0 9 * * *
+
+# SQLite (opcional; si no se define, usa ./data/bot.db)
+DATABASE_PATH=./data/bot.db
+```
+
+### Explicacion del cron de las 9:00 AM
+
+- `CRON_SCHEDULE=0 9 * * *` significa: todos los dias a las `9:00 AM`.
+- El scheduler se ejecuta en la zona horaria `America/Bogota`, asi que la hora se interpreta en Colombia.
+- Si despliegas el bot en un servidor con otra zona horaria, el cron sigue respetando Bogota porque esa timezone se fija en el codigo.
+
+## 🧠 Logica tecnica y ahorro de saldo de API
+
+El orden de los filtros importa. La idea del proyecto no es mandar todo a GPT, sino usar OpenAI solo despues de reducir el espacio de busqueda con reglas baratas y reproducibles.
+
+### Flujo real del pipeline
+
+1. `cheapsharkClient` consulta ofertas de Steam con `storeID=1`, `onSale=1`, `sortBy=Deal Rating`, `upperPrice` y `pageSize`.
+2. `rulesFilter` aplica filtros deterministas:
+   - descuento minimo
+   - precio maximo
+   - aprobacion por `Metacritic >= umbral` o `Steam Rating >= umbral`
+3. Antes de IA, el pipeline excluye juegos ya notificados segun `DEDUP_DAYS`.
+4. Con los candidatos restantes, se calcula un hash determinista.
+5. Si ese hash coincide con el `daily_snapshot`, se reutiliza el resultado anterior y no se llama a OpenAI.
+6. Solo si el conjunto cambio, `openaiFilter` invoca `gpt-4o-mini` con un payload reducido: `steamAppID`, `title`, `metacriticScore`, `steamRatingPercent` y `steamRatingText`.
+7. El modelo devuelve solo `selectedIds` y `reasons`; los precios, links y demas datos visibles siempre salen de CheapShark.
+8. El snapshot exitoso se guarda en SQLite para que `/deals` y el cron puedan reutilizarlo.
+
+### Por que esto ahorra saldo
+
+- `/deals` usa estrategia `snapshot-first`: si ya existe un snapshot fresco del dia, responde sin tocar CheapShark ni OpenAI.
+- La deduplicacion ocurre antes de GPT, asi que no se gastan tokens en juegos que el usuario ya recibio.
+- El hash de candidatos evita repetir la misma curacion si la oferta no cambio.
+- Si OpenAI falla y existe un snapshot fresco, el sistema reutiliza ese snapshot en lugar de rehacer el analisis.
+
+En terminos practicos: la capa de IA no actua como primer filtro, sino como segunda capa editorial. Ese orden reduce costo, mejora consistencia y simplifica el fallback.
+
+## 🤖 Comandos del bot
+
+| Comando | Funcion |
 | --- | --- |
-| `npm run dev` | Ejecuta el bot con `tsx watch` sobre `src/bot/index.ts`. |
+| `/start` | Registra el `chat_id` y activa las notificaciones diarias. |
+| `/deals` | Devuelve el snapshot fresco del dia o ejecuta el pipeline si hace falta. |
+| `/help` | Muestra ayuda resumida del bot. |
+| `/stop` | Elimina la suscripcion del chat. |
+
+## 🧪 Scripts utiles
+
+| Script | Descripcion |
+| --- | --- |
+| `npm run dev` | Ejecuta el bot en desarrollo con `tsx watch`. |
 | `npm run build` | Compila TypeScript a `dist/`. |
-| `npm start` | Inicia la versión compilada desde `dist/bot/index.js`. |
-| `npm run test:deals` | Ejecuta el pipeline y permite probar el mensaje final sin levantar todo el bot. |
+| `npm start` | Inicia la version compilada. |
+| `npm run start:prod` | Alias de inicio en produccion. |
+| `npm run test:deals` | Prueba el pipeline y el mensaje final sin depender del flujo completo del bot. |
 
-## Comandos del bot
+## 📁 Estructura del proyecto
 
-| Comando | Descripción |
-| --- | --- |
-| `/start` | Suscribe el `chat_id` y activa las notificaciones diarias. |
-| `/deals` | Devuelve el snapshot fresco del día o ejecuta el pipeline si hace falta. |
-| `/stop` | Elimina la suscripción y deja de recibir broadcasts. |
+```text
+src/
+├── bot/                # Inicio del bot y comandos
+├── cache/              # Deduplicacion y snapshot diario
+├── db/                 # Conexion y esquema SQLite
+├── notifier/           # Broadcast a suscriptores
+├── scheduler/          # Cron diario
+├── services/           # CheapShark, OpenAI, reglas y divisa
+├── types/              # Tipos TypeScript
+└── utils/              # Formateo del mensaje final
+```
 
-## Operación en producción
+## 🚀 Operacion en produccion
 
-- El bot arranca con Telegraf en modo polling.
-- El scheduler corre con `node-cron` usando la zona horaria `America/Bogota`.
-- Al iniciar, se limpia cualquier snapshot obsoleto de días anteriores.
-- `/deals` tiene cooldown por chat para evitar abuso y proteger costo operativo.
-- Los broadcasts aplican un pequeño delay entre envíos y eliminan chats inválidos de forma automática.
-- La tasa USD/COP se cachea en memoria y tiene fallback seguro si el proveedor externo falla.
+- El bot arranca con `Telegraf` en modo polling.
+- El cron corre en `America/Bogota`.
+- Al iniciar, se limpia cualquier snapshot obsoleto.
+- `/deals` tiene cooldown por chat para evitar abuso.
+- Los broadcasts introducen un pequeno delay entre envios y limpian chats invalidos de forma automatica.
+- La base SQLite se crea sola en `./data/bot.db` si no defines `DATABASE_PATH`.
 
-## Filosofía del proyecto
+## 🐳 Docker
 
-Steam Deals Bot no intenta ser un scraper masivo de descuentos. Es una capa editorial encima de CheapShark: una combinación de reglas duras, memoria local y criterio asistido por IA para que el usuario vea pocas ofertas, pero con mejor señal.
+El repositorio incluye un `Dockerfile` multi-stage:
+
+- compila el proyecto en una etapa de build,
+- conserva solo dependencias de produccion,
+- monta `/data` como volumen para persistir SQLite,
+- y arranca el bot con `node dist/bot/index.js`.
+
+## 📌 Notas finales
+
+- Para recibir mensajes, el usuario debe iniciar conversacion con el bot usando `/start`.
+- El proyecto actual ya usa SQLite; no depende de archivos JSON para snapshot, suscriptores o deduplicacion.
+- Si quieres probar solo el pipeline de ofertas antes de desplegar Telegram, usa `npm run test:deals`.
