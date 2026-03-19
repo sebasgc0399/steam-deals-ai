@@ -21,7 +21,6 @@
 13. [Scripts del Proyecto](#scripts-del-proyecto)
 14. [Consideraciones de Costo](#consideraciones-de-costo)
 15. [Roadmap Futuro](#roadmap-futuro)
-16. [Notas para Claude Code](#notas-para-claude-code)
 
 ---
 
@@ -1628,28 +1627,3 @@ Con el snapshot cache, la mayoría de los días los candidatos no cambian signif
 - [ ] Botón inline "💾 Guardar para después" (Telegram InlineKeyboard)
 
 ---
-
-## Notas para Claude Code
-
-Este documento sirve como spec completo para el proyecto. Al usarlo con Claude Code, el orden de implementación recomendado es:
-
-1. Crear `package.json` y `tsconfig.json`
-2. Instalar dependencias (`npm install`)
-3. Crear `.env` desde `.env.example`
-4. Implementar `src/types/index.ts`
-5. Implementar `src/cache/deduplication.ts`
-6. Implementar `src/cache/snapshotCache.ts`
-7. Implementar `src/services/cheapsharkClient.ts`
-8. Implementar `src/services/rulesFilter.ts` ← CAPA 1
-9. Implementar `src/services/openaiFilter.ts` ← CAPA 2
-10. Implementar `src/services/dealsService.ts` ← orquesta + snapshot cache
-11. Implementar `src/utils/formatMessage.ts`
-12. Implementar `src/notifier/telegramNotifier.ts`
-13. Implementar `src/scheduler/cronJobs.ts`
-14. Implementar `src/bot/commands.ts`
-15. Implementar `src/config.ts`
-16. Implementar `src/bot/index.ts`
-17. Crear `src/scripts/testDeals.ts` para prueba del pipeline completo
-18. Probar con `npm run test:deals` antes de lanzar el bot
-
-Este orden permite probar cada capa de forma aislada. En particular, probar `rulesFilter` sin tocar OpenAI primero ahorra tokens durante el desarrollo.
