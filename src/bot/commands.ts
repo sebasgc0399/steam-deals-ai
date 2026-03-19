@@ -5,7 +5,7 @@ import { getExchangeRate } from '../services/currencyService';
 import { fetchDeals } from '../services/dealsService';
 import { formatDealsMessage } from '../utils/formatMessage';
 
-// Rate limit en memoria: Map<chatId, timestamp último uso>
+// Rate limit en memoria: Map<chatId, timestamp ultimo uso>.
 // Simple, sin dependencias externas. Se resetea al reiniciar el proceso (aceptable para MVP).
 const lastDealRequest = new Map<number, number>();
 
@@ -13,13 +13,13 @@ export function registerCommands(bot: Telegraf): void {
   bot.start(async (ctx) => {
     saveChatId(ctx.chat.id);
     await ctx.reply(
-      '¡Hola! 🎮 Soy tu bot de ofertas de Steam.\n\n'
-      + 'Cada día te enviaré las mejores ofertas filtradas por IA: solo AAA, '
+      '\u00A1Hola! \u{1F3AE} Soy tu bot de ofertas de Steam.\n\n'
+      + 'Cada dia te enviare las mejores ofertas filtradas por IA: solo AAA, '
       + 'indie premiados y juegos que realmente valen la pena.\n\n'
       + 'Comandos:\n'
-      + '/deals — Ver ofertas ahora mismo\n'
-      + '/stop  — Dejar de recibir notificaciones\n'
-      + '/help  — Ver ayuda',
+      + '/deals \u2014 Ver ofertas ahora mismo\n'
+      + '/stop  \u2014 Dejar de recibir notificaciones\n'
+      + '/help  \u2014 Ver ayuda',
     );
   });
 
@@ -31,7 +31,7 @@ export function registerCommands(bot: Telegraf): void {
 
     if (elapsed < config.rateLimit.dealsCooldownMs) {
       const remaining = Math.ceil((config.rateLimit.dealsCooldownMs - elapsed) / 1000);
-      await ctx.reply(`⏳ Espera ${remaining}s antes de volver a consultar ofertas.`);
+      await ctx.reply(`\u23F3 Espera ${remaining}s antes de volver a consultar ofertas.`);
       return;
     }
 
@@ -43,36 +43,36 @@ export function registerCommands(bot: Telegraf): void {
 
       if (result.status === 'ai_error') {
         await ctx.reply(
-          '⚠️ El servicio de curación con IA no está disponible ahora mismo.\n'
+          '\u26A0\uFE0F El servicio de curacion con IA no esta disponible ahora mismo.\n'
           + 'Intenta de nuevo en unos minutos.',
         );
         return;
       }
 
       if (result.status === 'no_deals' || result.deals.length === 0) {
-        await ctx.reply('🎮 No hay ofertas destacadas en este momento. ¡Vuelve mañana!');
+        await ctx.reply('\u{1F3AE} No hay ofertas destacadas en este momento. \u00A1Vuelve manana!');
         return;
       }
 
       const copRate = await getExchangeRate();
       await ctx.reply(formatDealsMessage(result.deals, copRate), { parse_mode: 'HTML' });
     } catch (err) {
-      await ctx.reply('❌ Hubo un error inesperado. Intenta más tarde.');
-      // Log mínimo: no volcar el stack ni el objeto de error completo
+      await ctx.reply('\u274C Hubo un error inesperado. Intenta mas tarde.');
+      // Log minimo: no volcar el stack ni el objeto de error completo.
       console.error('[/deals] Error inesperado:', (err as Error).message ?? 'sin mensaje');
     }
   });
 
   bot.command('help', async (ctx) => {
     await ctx.reply(
-      '🤖 <b>Steam Deals Bot</b>\n\n'
+      '\u{1F916} <b>Steam Deals Bot</b>\n\n'
       + 'Busco ofertas en Steam y uso IA para filtrar solo los juegos '
       + 'que realmente valen la pena: AAA, indie reconocidos, juegos trending.\n\n'
       + '<b>Comandos:</b>\n'
-      + '/start — Activar notificaciones diarias\n'
-      + '/deals — Ver mejores ofertas ahora\n'
-      + '/stop  — Dejar de recibir notificaciones\n'
-      + '/help  — Esta ayuda',
+      + '/start \u2014 Activar notificaciones diarias\n'
+      + '/deals \u2014 Ver mejores ofertas ahora\n'
+      + '/stop  \u2014 Dejar de recibir notificaciones\n'
+      + '/help  \u2014 Esta ayuda',
       { parse_mode: 'HTML' },
     );
   });
@@ -82,7 +82,7 @@ export function registerCommands(bot: Telegraf): void {
     // El usuario puede volver a suscribirse en cualquier momento con /start.
     removeChatId(ctx.chat.id);
     await ctx.reply(
-      '✅ Te diste de baja de las notificaciones diarias.\n'
+      '\u2705 Te diste de baja de las notificaciones diarias.\n'
       + 'Puedes volver a activarlas cuando quieras con /start.',
     );
   });

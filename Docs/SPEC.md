@@ -1627,11 +1627,6 @@ Con el snapshot cache, la mayoría de los días los candidatos no cambian signif
 - [ ] Comando `/config` para ajustar filtros por usuario (precio máximo, % descuento)
 - [ ] Botón inline "💾 Guardar para después" (Telegram InlineKeyboard)
 
-### v1.3 — Múltiples tiendas
-- [ ] Agregar Epic Games Store (via IsThereAnyDeal API)
-- [ ] Agregar GOG
-- [ ] Notificaciones especiales durante grandes sales (Summer Sale, Winter Sale)
-
 ---
 
 ## Notas para Claude Code
